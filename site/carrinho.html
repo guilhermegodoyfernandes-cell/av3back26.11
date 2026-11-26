@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrinho | Godoy Autopeças</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container-fluid justify-content-center">
+                <a class="navbar-brand" href="index.html"><img src="logo.png" alt="Godoy Autopeças"></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Abrir menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse flex-grow-0 justify-content-center" id="navbarNav">
+                    <ul class="navbar-nav text-center align-items-lg-center">
+                        <li class="nav-item"><a class="nav-link" href="index.html">Peças</a></li>
+                        <li class="nav-item nav-carrinho"><a class="nav-link active" href="carrinho.html">Carrinho</a><span id="badge-carrinho" class="badge-carrinho" style="display: none">0</span></li>
+                        <li class="nav-item" id="nav-login"><a class="nav-link" href="login.html">Entrar</a></li>
+                    </ul>
+                    <div class="dropdown m-3">
+                        <button id="user-info" class="btn btn-danger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="display: none">Olá</button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="perfil.html">Meu perfil</a></li>
+                            <li><a class="dropdown-item" href="carrinho.html#compras">Minhas compras</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()">Sair</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="topo">
+            <h1>Carrinho e compras</h1>
+            <p>Escolha as peças, informe o endereço e finalize seu pedido.</p>
+        </section>
+
+        <section class="painel">
+            <h2>Buscar peças</h2>
+            <div class="barra-filtros">
+                <div class="campo-filtro campo-busca">
+                    <label for="busca-produto">Nome da peça</label>
+                    <input type="search" id="busca-produto" placeholder="Ex.: filtro, freio, óleo">
+                </div>
+                <div class="acoes-filtro">
+                    <button id="btn-buscar" type="button">Buscar</button>
+                </div>
+            </div>
+            <div id="resultados" class="lista-resultados"></div>
+
+            <h2>Itens do carrinho</h2>
+            <div id="carrinho" class="carrinho-tabela">
+                <p class="mensagem">Seu carrinho está vazio.</p>
+            </div>
+            <p class="total-carrinho">Total: <strong id="total-carrinho">R$ 0,00</strong></p>
+
+            <h2>Finalizar compra</h2>
+            <form id="form-compra" class="form-compra">
+                <div class="grid-endereco">
+                    <label>Número<input type="text" id="end-numero" class="input_texto" required></label>
+                    <label>Rua<input type="text" id="end-rua" class="input_texto" required></label>
+                    <label>Bairro<input type="text" id="end-bairro" class="input_texto" required></label>
+                    <label>Cidade<input type="text" id="end-cidade" class="input_texto" required></label>
+                    <label>Estado<input type="text" id="end-estado" class="input_texto" maxlength="2" required></label>
+                    <label>Forma de pagamento
+                        <select id="forma-pagamento" class="input_texto" required>
+                            <option value="">Selecione...</option>
+                            <option value="Pix">Pix</option>
+                            <option value="Cartão de crédito">Cartão de crédito</option>
+                            <option value="Cartão de débito">Cartão de débito</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Boleto">Boleto</option>
+                        </select>
+                    </label>
+                </div>
+                <button type="submit" id="btn-finalizar">Finalizar compra</button>
+            </form>
+        </section>
+
+        <section class="painel" id="compras">
+            <h2>Minhas compras</h2>
+            <div id="lista-compras" class="lista-compras">
+                <p class="mensagem">Carregando compras...</p>
+            </div>
+        </section>
+    </main>
+
+    <div class="toast-area">
+        <div id="liveToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+            <div class="d-flex">
+                <div class="toast-body" id="toast-message">Mensagem</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+            </div>
+        </div>
+    </div>
+    <footer>Godoy Autopeças · Peças originais e de linha para o seu carro</footer>
+
+    <script src="./pages.js"></script>
+    <script type="module">
+        import { buscar_produtos, cadastrar_compra, buscar_compras, requer_login } from "./api.js";
+        import {
+            obter_carrinho,
+            adicionar_ao_carrinho,
+            alterar_quantidade,
+            remover_do_carrinho,
+            limpar_carrinho
+        } from "./carrinho.js";
+
+        if (requer_login()) {
+            let itens = obter_carrinho();
+            const resultados = document.getElementById("resultados");
+            const areaCarrinho = document.getElementById("carrinho");
+            const totalCarrinho = document.getElementById("total-carrinho");
+            const listaCompras = document.getElementById("lista-compras");
+            const formCompra = document.getElementById("form-compra");
+
+            const dinheiro = valor => Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+            function notificar(mensagem, classe = "bg-success") {
+                window.mostrarToast(mensagem, classe);
+            }
+
+            async function carregar_resultados() {
+                resultados.replaceChildren();
+                const params = new URLSearchParams();
+                const busca = document.getElementById("busca-produto").value.trim();
+                if (busca) params.set("busca", busca);
+
+                try {
+                    const produtos = await buscar_produtos(params);
+                    if (produtos.length === 0) {
+                        resultados.innerHTML = '<p class="mensagem">Nenhuma peça encontrada.</p>';
+                        return;
+                    }
+                    produtos.forEach(produto => {
+                        const card = document.createElement("article");
+                        card.className = "produto-mini";
+                        const imagem = document.createElement("img");
+                        imagem.src = produto.caminho_img;
+                        imagem.alt = produto.nome;
+                        const info = document.createElement("div");
+                        const nome = document.createElement("strong");
+                        nome.textContent = produto.nome;
+                        const preco = document.createElement("span");
+                        preco.textContent = dinheiro(produto.preco) + " · " + produto.quantidade + " em estoque";
+                        info.append(nome, preco);
+                        const botao = document.createElement("button");
+                        botao.type = "button";
+                        botao.textContent = "Adicionar";
+                        botao.disabled = produto.quantidade < 1;
+                        botao.addEventListener("click", () => adicionar(produto));
+                        card.append(imagem, info, botao);
+                        resultados.appendChild(card);
+                    });
+                } catch (error) {
+                    resultados.innerHTML = '<p class="mensagem">Erro ao carregar peças: ' + error.message + '</p>';
+                }
+            }
+
+            function adicionar(produto) {
+                adicionar_ao_carrinho(produto);
+                itens = obter_carrinho();
+                renderizar_carrinho();
+            }
+
+            function renderizar_carrinho() {
+                areaCarrinho.replaceChildren();
+                if (itens.length === 0) {
+                    areaCarrinho.innerHTML = '<p class="mensagem">Seu carrinho está vazio. Adicione peças na vitrine ou na busca acima.</p>';
+                    totalCarrinho.textContent = dinheiro(0);
+                    return;
+                }
+
+                let total = 0;
+                itens.forEach(item => {
+                    const id = item.id;
+                    total += Number(item.produto.preco) * item.quantidade;
+                    const linha = document.createElement("div");
+                    linha.className = "linha-carrinho";
+                    const nome = document.createElement("span");
+                    nome.textContent = item.produto.nome + " — " + dinheiro(item.produto.preco);
+                    const quantidade = document.createElement("input");
+                    quantidade.type = "number";
+                    quantidade.min = "1";
+                    quantidade.max = String(item.produto.quantidade);
+                    quantidade.value = String(item.quantidade);
+                    quantidade.dataset.id = id;
+                    quantidade.className = "input-quantidade";
+                    const remover = document.createElement("button");
+                    remover.type = "button";
+                    remover.textContent = "Remover";
+                    remover.className = "btn-secundario";
+                    remover.dataset.remover = id;
+                    linha.append(nome, quantidade, remover);
+                    areaCarrinho.appendChild(linha);
+                });
+                totalCarrinho.textContent = dinheiro(total);
+            }
+
+            areaCarrinho.addEventListener("change", event => {
+                if (!event.target.classList.contains("input-quantidade")) return;
+                const id = Number(event.target.dataset.id);
+                const quantidade = Number(event.target.value);
+                if (!alterar_quantidade(id, quantidade)) {
+                    const item = itens.find(i => i.id === id);
+                    event.target.value = item ? item.quantidade : 1;
+                    return;
+                }
+                itens = obter_carrinho();
+                renderizar_carrinho();
+            });
+
+            areaCarrinho.addEventListener("click", event => {
+                const id = event.target.dataset.remover;
+                if (id === undefined) return;
+                remover_do_carrinho(Number(id));
+                itens = obter_carrinho();
+                renderizar_carrinho();
+            });
+
+            formCompra.addEventListener("submit", async event => {
+                event.preventDefault();
+                if (itens.length === 0) {
+                    notificar("Adicione ao menos uma peça ao carrinho.", "bg-danger");
+                    return;
+                }
+
+                const btn = document.getElementById("btn-finalizar");
+                btn.disabled = true;
+                btn.textContent = "Enviando...";
+                try {
+                    await cadastrar_compra({
+                        produtos: itens.map(item => ({ id: item.id, quantidade: item.quantidade })),
+                        endereco: {
+                            numero: document.getElementById("end-numero").value,
+                            rua: document.getElementById("end-rua").value,
+                            bairro: document.getElementById("end-bairro").value,
+                            cidade: document.getElementById("end-cidade").value,
+                            estado: document.getElementById("end-estado").value
+                        },
+                        forma_pagamento: document.getElementById("forma-pagamento").value
+                    });
+                    limpar_carrinho();
+                    itens = obter_carrinho();
+                    renderizar_carrinho();
+                    formCompra.reset();
+                    notificar("Compra cadastrada com sucesso!");
+                    await carregar_compras();
+                    await carregar_resultados();
+                } catch (error) {
+                    notificar("Não foi possível finalizar a compra: " + error.message, "bg-danger");
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Finalizar compra";
+                }
+            });
+
+            async function carregar_compras() {
+                listaCompras.replaceChildren();
+                try {
+                    const linhas = await buscar_compras();
+                    if (linhas.length === 0) {
+                        listaCompras.innerHTML = '<p class="mensagem">Você ainda não realizou compras.</p>';
+                        return;
+                    }
+
+                    const agrupadas = new Map();
+                    linhas.forEach(linha => {
+                        if (!agrupadas.has(linha.idcompra)) {
+                            agrupadas.set(linha.idcompra, { ...linha, itens: [] });
+                        }
+                        agrupadas.get(linha.idcompra).itens.push(linha);
+                    });
+
+                    agrupadas.forEach(compra => {
+                        const card = document.createElement("article");
+                        card.className = "compra-card";
+                        const cabecalho = document.createElement("div");
+                        cabecalho.className = "compra-cabecalho";
+                        cabecalho.innerHTML =
+                            '<strong>Compra #' + compra.idcompra + '</strong>' +
+                            '<span>' + compra.data + ' · ' + compra.forma_pagamento + '</span>' +
+                            '<strong>' + dinheiro(compra.valor_total) + '</strong>';
+                        const endereco = document.createElement("p");
+                        endereco.className = "compra-endereco";
+                        endereco.textContent = compra.rua + ", " + compra.numero + " - " + compra.bairro +
+                            " - " + compra.cidade + "/" + compra.estado;
+                        card.append(cabecalho, endereco);
+
+                        compra.itens.forEach(item => {
+                            const linha = document.createElement("div");
+                            linha.className = "compra-item";
+                            const imagem = document.createElement("img");
+                            imagem.src = item.caminho_img;
+                            imagem.alt = item.produto;
+                            const descricao = document.createElement("span");
+                            descricao.textContent = item.quantidade + "x " + item.produto + " — " + dinheiro(item.valor_unitario) + " cada";
+                            linha.append(imagem, descricao);
+                            card.appendChild(linha);
+                        });
+                        listaCompras.appendChild(card);
+                    });
+                } catch (error) {
+                    listaCompras.innerHTML = '<p class="mensagem">Erro ao carregar compras: ' + error.message + '</p>';
+                }
+            }
+
+            document.getElementById("btn-buscar").addEventListener("click", carregar_resultados);
+            document.getElementById("busca-produto").addEventListener("keydown", event => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    carregar_resultados();
+                }
+            });
+
+            renderizar_carrinho();
+            carregar_resultados();
+            carregar_compras();
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>

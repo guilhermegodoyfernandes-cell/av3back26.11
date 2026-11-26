@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu perfil | Godoy Autopeças</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container-fluid justify-content-center">
+                <a class="navbar-brand" href="index.html"><img src="logo.png" alt="Godoy Autopeças"></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Abrir menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse flex-grow-0 justify-content-center" id="navbarNav">
+                    <ul class="navbar-nav text-center align-items-lg-center">
+                        <li class="nav-item"><a class="nav-link" href="index.html">Peças</a></li>
+                        <li class="nav-item nav-carrinho"><a class="nav-link" href="carrinho.html">Carrinho</a><span id="badge-carrinho" class="badge-carrinho" style="display: none">0</span></li>
+                        <li class="nav-item" id="nav-login"><a class="nav-link" href="login.html">Entrar</a></li>
+                    </ul>
+                    <div class="dropdown m-3">
+                        <button id="user-info" class="btn btn-danger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="display: none">Olá</button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="perfil.html">Meu perfil</a></li>
+                            <li><a class="dropdown-item" href="carrinho.html#compras">Minhas compras</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()">Sair</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="topo">
+            <h1>Meu perfil</h1>
+            <p>Dados cadastrados na sua conta Godoy Autopeças.</p>
+        </section>
+
+        <section class="painel">
+            <div class="dados-perfil" id="dados-perfil">
+                <p class="mensagem">Carregando seus dados...</p>
+            </div>
+            <div class="acoes-perfil">
+                <a href="carrinho.html#compras" class="btn-acao">Ver minhas compras</a>
+                <a href="carrinho.html" class="btn-acao btn-secundario">Ir para o carrinho</a>
+            </div>
+        </section>
+    </main>
+
+    <div class="toast-area">
+        <div id="liveToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+            <div class="d-flex">
+                <div class="toast-body" id="toast-message">Mensagem</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+            </div>
+        </div>
+    </div>
+    <footer>Godoy Autopeças · Peças originais e de linha para o seu carro</footer>
+
+    <script type="module" src="./carrinho.js"></script>
+    <script src="./pages.js"></script>
+    <script type="module">
+        import { buscar_perfil, requer_login } from "./api.js";
+
+        if (requer_login()) {
+            const area = document.getElementById("dados-perfil");
+
+            function campo(label, valor) {
+                const linha = document.createElement("div");
+                linha.className = "linha-perfil";
+                const titulo = document.createElement("span");
+                titulo.textContent = label;
+                const conteudo = document.createElement("strong");
+                conteudo.textContent = valor || "-";
+                linha.append(titulo, conteudo);
+                return linha;
+            }
+
+            try {
+                const cliente = await buscar_perfil();
+                area.replaceChildren(
+                    campo("Nome", cliente.nome),
+                    campo("CPF", cliente.cpf),
+                    campo("Celular", cliente.celular),
+                    campo("E-mail", cliente.email)
+                );
+            } catch (error) {
+                if (error.message.toLowerCase().includes("token")) {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("nome_cliente");
+                    window.location.href = "login.html";
+                } else {
+                    area.replaceChildren();
+                    const msg = document.createElement("p");
+                    msg.className = "mensagem";
+                    msg.textContent = "Não foi possível carregar seu perfil: " + error.message;
+                    area.appendChild(msg);
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>
